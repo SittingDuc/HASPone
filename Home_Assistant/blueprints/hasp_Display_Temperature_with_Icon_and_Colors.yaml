@@ -103,12 +103,6 @@ blueprint:
             - "°"
             - "°F"
             - "°C"
-    integer_value:
-      name: "Display Temperature as an Integer"
-      description: "Display Temperature as a whole number. Default, false, is to display all the decimals provided by the sensor. Set to true and all fractions are discarded."
-      default: false
-      selector:
-        boolean:
     thermometer_empty_color:
       name: "Thermometer empty color"
       description: 'Icon color for an empty thermometer in Nextion RGB565 format (see "Nextion color codes" above for reference). -1 = Current theme foreground color, or 2047 = Ice blue'
@@ -270,13 +264,7 @@ variables:
       
     {%- endif -%}
   suffixstring: "{% if suffix_select != 'No suffix' %}{{ suffix_select }}{% endif %}"
-  integer_value: !input integer_value
-  text: >-
-    {%- if integer_value -%}
-      {{temperature|int}}{{suffixstring}}
-    {%- else -%}
-      {{temperature}}{{suffixstring}}
-    {%- endif -%}
+  text: "{{temperature}}{{suffixstring}}"
   font: 10
   ypos: "{{(haspbutton|int - 4) * 67 + 2}}"
   xpos: 0
