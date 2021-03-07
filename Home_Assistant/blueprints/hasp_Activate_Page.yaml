@@ -26,7 +26,7 @@ blueprint:
 
     </details>
 
-  source_url: "https://github.com/HASwitchPlate/HASPone/blob/main/Home_Assistant/blueprints/hasp_Activate_Page.yaml"
+  source_url: "https://github.com/HASwitchPlate/Blueprints/blob/main/hasp_Activate_Page.yaml"
   domain: automation
   input:
     haspdevice:
@@ -63,7 +63,7 @@ blueprint:
       default: 1
       selector:
         number:
-          min: 1
+          min: 0
           max: 11
           mode: slider
           unit_of_measurement: page
@@ -106,7 +106,7 @@ trigger_variables:
   hasppage: !input hasppage
   haspbutton: !input haspbutton
   haspobject: '{{ "p[" ~ hasppage ~ "].b[" ~ haspbutton ~ "]" }}'
-  buttonjsonpayload: '{"event_type":"button_short_press","event":"{{haspobject}}","value":"ON"}'
+  buttonjsonpayload: '{"event_type":"button_short_release","event":"{{haspobject}}","value":"OFF"}'
 
 trigger:
   - platform: mqtt
@@ -118,8 +118,8 @@ condition:
     value_template: "{{ is_state(haspsensor, 'ON') }}"
 
 action:
+  - delay: "00:00:00.1"
   - service: mqtt.publish
     data:
       topic: "{{pagecommandtopic}}"
       payload: "{{targetpage}}"
-
