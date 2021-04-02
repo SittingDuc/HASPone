@@ -53,6 +53,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     heatpump:
       name: "Heatpump to control"
       description: "Select a heatpump to control"

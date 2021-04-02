@@ -16,6 +16,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     darkvalue:
       name: "Brightness to set on idle"
       description: "Select the brightness value to become when idle"

@@ -36,6 +36,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     targetpage:
       name: "Page to activate"
       description: "Select a destination page for this button to activate."

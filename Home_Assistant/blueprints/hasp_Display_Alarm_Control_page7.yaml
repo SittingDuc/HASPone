@@ -31,6 +31,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     alarmpanel:
       name: "Alarm panel to control"
       description: "Select an alarm panel to control"

@@ -69,6 +69,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     hasppage:
       name: "HASP Page"
       description: "Select the HASP page (1-11). Refer to the HASP Page and Button reference above."
@@ -86,7 +87,7 @@ blueprint:
       selector:
         number:
           min: 4
-          max: 15
+          max: 16
           mode: slider
           unit_of_measurement: button
     text:
@@ -341,4 +342,3 @@ action:
                     data:
                       topic: "{{commandtopic}}.bco2"
                       payload: "{{trigger.payload}}"
-

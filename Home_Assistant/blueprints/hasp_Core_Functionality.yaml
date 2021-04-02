@@ -68,6 +68,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     page1text:
       name: "Page select button 1 text"
       description: "Enter text to appear on the left-most page select button #1.  It's a small button, so keep it short.  6 character (or shorter) words are crisp and legible."

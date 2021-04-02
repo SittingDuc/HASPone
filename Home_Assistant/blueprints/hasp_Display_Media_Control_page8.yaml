@@ -31,6 +31,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     mediaplayer:
       name: "Media Player to control"
       description: "Select a media player to control"

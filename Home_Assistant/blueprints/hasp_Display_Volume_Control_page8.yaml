@@ -31,6 +31,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     volumeentity:
       name: "Media Player to control"
       description: "Select a media player to control volume"

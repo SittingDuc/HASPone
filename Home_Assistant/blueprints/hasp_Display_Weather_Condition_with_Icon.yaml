@@ -29,6 +29,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     hasppage:
       name: "HASP Page"
       description: "Select the HASP page (1-3) for the temperature"

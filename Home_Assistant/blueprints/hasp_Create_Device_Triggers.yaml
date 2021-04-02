@@ -38,6 +38,7 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
     objects:
       name: "HASP buttons"
       description: "Create one device trigger for each button in this list."
