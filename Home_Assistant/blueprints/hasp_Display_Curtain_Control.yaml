@@ -1,0 +1,524 @@
+blueprint:
+  name: "HASP p[4].b[all] Page 4 displays Curtain controls"
+  description: |
+
+    # Description
+
+    Page 4 on my forked HMI controls a Curtain. Open, Close, slider for position
+
+    ![Preview](https://raw.githubusercontent.com/HASwitchPlate/HASPone/main/images/hasp_Display_curtain_Control_page9.png)
+
+    ## HASP Page and Button reference
+
+    <details>
+
+    This automation is designed to work with the forked random page 4:
+
+    | Page 4 |
+    |--------|
+    | ![Page 4](https://raw.githubusercontent.com/HASwitchPlate/HASPone/main/images/NextibonUI_p4_3buttons.png) |
+
+
+    </details>
+
+    ## Nextion color codes
+
+    <details>
+
+    The Nextion environment utilizes RGB 565 encoding.  [Use this handy convertor](https://nodtem66.github.io/nextion-hmi-color-convert/index.html) to select your colors and convert to the RGB 565 format.
+
+    Here are some example colors:
+
+    | Color  | Code  |
+    |--------|-------|
+    | White  | 65535 |
+    | Black  | 0     |
+    | Grey   | 25388 |
+    | Red    | 63488 |
+    | Green  | 2016  |
+    | Blue   | 31    |
+    | Yellow | 65504 |
+    | Orange | 64512 |
+    | Brown  | 48192 |
+
+    </details>
+
+  domain: automation
+  input:
+    haspdevice:
+      name: "HASP Device"
+      description: "Select the HASP device"
+      selector:
+        device:
+          integration: mqtt
+          manufacturer: "HASwitchPlate"
+          model: "HASPone v1.0.0"
+          model: "HASPone v1.0.1"
+    hasppage:
+      name: "HASP Page"
+      description: "Select the HASP page (4-5) for the temperature. Refer to the HASP Page and Button reference above."
+      default: 4
+      selector:
+        number:
+          min: 1
+          max: 11
+          mode: slider
+          unit_of_measurement: page
+    curtain:
+      name: "Curtain to control"
+      description: "Select a curtain to control"
+      selector:
+        entity:
+          domain: cover
+          domain: light # because hack with older Tasmota
+    value_open:
+      name: 'internal value to use for "OPEN" command'
+      description: "The value sent to the entity to open the curtain fully"
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: slider
+    value_half:
+      name: 'internal value to use for "HALF" command'
+      description: "The value sent to the entity to open the curtain halfway"
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: slider
+    value_close:
+      name: 'internal value to use for "CLOSE" command'
+      description: "The value sent to the entity to close the curtain fully"
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: slider
+    text_open:
+      name: 'Text to display for the "Open" button'
+      description: 'Enter text to be displayed on the top button as a command to "Open"'
+      default: "Open"
+      selector:
+        text:
+    text_half:
+      name: 'Text to display for the "Half" button'
+      description: 'Enter text to be displayed on the bottom button as a command to "Open Halfway"'
+      default: "Half"
+      selector:
+        text:
+    text_close:
+      name: 'Text to display for the "Close" button'
+      description: 'Enter text to be displayed on the bottom button as a command to "Close"'
+      default: "Close"
+      selector:
+        text:
+    font_select:
+      name: "Font"
+      description: "Select the font for the displayed text.  Refer to the HASP Font Reference above."
+      default: "8 - Noto Sans 64"
+      selector:
+        select:
+          options:
+            - "0 - Consolas 24"
+            - "1 - Consolas 32"
+            - "2 - Consolas 48"
+            - "3 - Consolas 80"
+            - "4 - Webdings 56"
+            - "5 - Noto Sans 24"
+            - "6 - Noto Sans 32"
+            - "7 - Noto Sans 48"
+            - "8 - Noto Sans 64"
+            - "9 - Noto Sans 80"
+            - "10 - Noto Sans Bold 80"
+    xcen_select:
+      name: "Text horizontal alignment"
+      description: "Horizontal text alignment: 0=Left 1=Center 2=Right"
+      default: "1 - Centered"
+      selector:
+        select:
+          options:
+            - "0 - Left aligned"
+            - "1 - Centered"
+            - "2 - Right aligned"
+    ycen_select:
+      name: "Text vertical alignment"
+      description: "Vertical text alignment: 0=Top 1=Center 2=Bottom"
+      default: "1 - Centered"
+      selector:
+        select:
+          options:
+            - "0 - Top aligned"
+            - "1 - Centered"
+            - "2 - Bottom aligned"
+    wrap:
+      name: "Text wrap"
+      description: "Enable line-wrapping text if too long to fit in the button."
+      default: false
+      selector:
+        boolean:
+    on_fgcolor:
+      name: '"active" foreground color'
+      description: 'Text foreground color for the current operating mode, in Nextion RGB565 format (see "Nextion color codes" above for reference). -1 = Current theme selected foreground color.'
+      default: -1
+      selector:
+        number:
+          min: -1
+          max: 65535
+          mode: slider
+    on_bgcolor:
+      name: '"active" background color'
+      description: 'Text background color for the current operating mode, in Nextion RGB565 format. -1 = Current theme selected background color.'
+      default: -1
+      selector:
+        number:
+          min: -1
+          max: 65535
+          mode: slider
+    off_fgcolor:
+      name: '"inactive" foreground color'
+      description: 'Text foreground color for the modes that are not currently active, in Nextion RGB565 format. -1 = Current theme unselected foreground color.'
+      default: -1
+      selector:
+        number:
+          min: -1
+          max: 65535
+          mode: slider
+    off_bgcolor:
+      name: '"inactive" background color'
+      description: 'Text background color for the modes that are not currently active, in Nextion RGB565 format. -1 = Current theme unselected background color.'
+      default: -1
+      selector:
+        number:
+          min: -1
+          max: 65535
+          mode: slider
+
+mode: parallel
+max_exceeded: silent
+
+variables:
+  haspname: >-
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^sensor\.") -%}
+        {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+  haspsensor: >-
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
+        {{ entity }}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+  hasppage: !input hasppage
+  curtain: !input curtain
+  value_open: !input value_open
+  value_close: !input value_close
+  value_half: !input value_half
+  on_fgcolor: !input on_fgcolor
+  on_bgcolor: !input on_bgcolor
+  off_fgcolor: !input off_fgcolor
+  off_bgcolor: !input off_bgcolor
+  #button4attribute: !input button4attribute
+  #button5attribute: !input button5attribute
+  commandtopic: '{{ "hasp/" ~ haspname ~ "/command/" }}'
+  #volumecommandtopic: '{{ "hasp/" ~ haspname ~ "/command/" ~ volumeobject ~ ".val" }}'
+  jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'
+  jsoncommandtopic: '{{ "hasp/" ~ haspname ~ "/command/json" }}'
+  selectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedforegroundcolor/rgb" }}'
+  selectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedbackgroundcolor/rgb" }}'
+  unselectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedforegroundcolor/rgb" }}'
+  unselectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedbackgroundcolor/rgb" }}'
+  selectedfg: >-
+    {%- set color = namespace() -%}
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^light\..*_selected_foreground_color(?:_\d+|)$") -%}
+        {%- set color.source=entity -%}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
+    {%- set red=(state_attr(color.source, "rgb_color")[0] * brightness)|int -%}
+    {%- set green=(state_attr(color.source, "rgb_color")[1] * brightness)|int -%}
+    {%- set blue=(state_attr(color.source, "rgb_color")[2] * brightness)|int -%}
+    {{ (red|bitwise_and(248)*256) + (green|bitwise_and(252)*8) + (blue|bitwise_and(248)/8)|int }}
+  selectedbg: >-
+    {%- set color = namespace() -%}
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^light\..*_selected_background_color(?:_\d+|)$") -%}
+        {%- set color.source=entity -%}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
+    {%- set red=(state_attr(color.source, "rgb_color")[0] * brightness)|int -%}
+    {%- set green=(state_attr(color.source, "rgb_color")[1] * brightness)|int -%}
+    {%- set blue=(state_attr(color.source, "rgb_color")[2] * brightness)|int -%}
+    {{ (red|bitwise_and(248)*256) + (green|bitwise_and(252)*8) + (blue|bitwise_and(248)/8)|int }}
+  unselectedfg: >-
+    {%- set color = namespace() -%}
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^light\..*_unselected_foreground_color(?:_\d+|)$") -%}
+        {%- set color.source=entity -%}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
+    {%- set red=(state_attr(color.source, "rgb_color")[0] * brightness)|int -%}
+    {%- set green=(state_attr(color.source, "rgb_color")[1] * brightness)|int -%}
+    {%- set blue=(state_attr(color.source, "rgb_color")[2] * brightness)|int -%}
+    {{ (red|bitwise_and(248)*256) + (green|bitwise_and(252)*8) + (blue|bitwise_and(248)/8)|int }}
+  unselectedbg: >-
+    {%- set color = namespace() -%}
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^light\..*_unselected_background_color(?:_\d+|)$") -%}
+        {%- set color.source=entity -%}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
+    {%- set red=(state_attr(color.source, "rgb_color")[0] * brightness)|int -%}
+    {%- set green=(state_attr(color.source, "rgb_color")[1] * brightness)|int -%}
+    {%- set blue=(state_attr(color.source, "rgb_color")[2] * brightness)|int -%}
+    {{ (red|bitwise_and(248)*256) + (green|bitwise_and(252)*8) + (blue|bitwise_and(248)/8)|int }}
+
+  font_select: !input font_select
+  font: '{{ font_select.split(" - ")[0] | int }}'
+  xcen_select: !input xcen_select
+  xcen: '{{ xcen_select.split(" - ")[0] | int }}'
+  ycen_select: !input ycen_select
+  ycen: '{{ ycen_select.split(" - ")[0] | int }}'
+  wrap: !input wrap
+  button4text: !input text_open
+  button5text: !input text_half
+  button6text: !input text_close
+  button7text: ''
+  b4obj: '{{ "p[" ~ hasppage ~ "].b[4]" }}'
+  b5obj: '{{ "p[" ~ hasppage ~ "].b[5]" }}'
+  b6obj: '{{ "p[" ~ hasppage ~ "].b[6]" }}'
+  b7obj: '{{ "p[" ~ hasppage ~ "].b[7]" }}'
+  brightness: '{{state_attr(curtain, "brightness")|int}}'
+
+
+trigger_variables:
+  haspdevice: !input haspdevice
+#  curtain: !input curtain
+  haspname: >-
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^sensor\.") -%}
+        {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+  haspsensor: >-
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
+        {{ entity }}
+        {{ break }}
+      {%- endif -%}
+    {%- endfor -%}
+  toggle_hp_state: "{%- if hp_is_off -%}heat_cool{%- else -%}off{%- endif -%}"
+  jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'
+  selectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedforegroundcolor/rgb" }}'
+  selectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedbackgroundcolor/rgb" }}'
+  unselectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedforegroundcolor/rgb" }}'
+  unselectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedbackgroundcolor/rgb" }}'
+
+trigger:
+  - platform: state
+    entity_id: !input curtain
+  - platform: template
+    value_template: "{{ is_state(haspsensor, 'ON') }}"
+  - platform: homeassistant
+    event: start
+  - platform: mqtt
+    topic: "{{jsontopic}}"
+  - platform: mqtt
+    topic: "{{selectedfgtopic}}"
+  - platform: mqtt
+    topic: "{{selectedbgtopic}}"
+  - platform: mqtt
+    topic: "{{unselectedfgtopic}}"
+  - platform: mqtt
+    topic: "{{unselectedbgtopic}}"
+
+condition:
+  - condition: template
+    value_template: "{{ is_state(haspsensor, 'ON') }}"
+
+action:
+  - choose:
+      #########################################################################
+      # RUN ACTIONS or Home Assistant Startup or HASP Connect
+      # Apply styles and place text
+      - conditions:
+          - condition: template
+            value_template: >- 
+              {{-
+                (trigger is not defined)
+              or
+                ((trigger.platform == 'homeassistant') and (trigger.event == 'start'))
+              or
+                ((trigger.platform == 'template') and (trigger.entity_id == haspsensor) and (trigger.to_state.state == 'ON'))
+              -}}
+        sequence:
+          - service: mqtt.publish
+            data:
+              topic: "{{jsoncommandtopic}}"
+              payload: >-
+                ["{{b4obj}}.txt=\"{{button4text}}\"",
+                "{{b4obj}}.font={{font}}",
+                "{{b4obj}}.xcen={{xcen}}",
+                "{{b4obj}}.ycen={{ycen}}",
+                "{{b4obj}}.pco={{selectedfg}}",
+                "{{b4obj}}.bco={{selectedbg}}",
+                "{{b4obj}}.pco2={{unselectedfg}}",
+                "{{b4obj}}.bco2={{unselectedbg}}",
+                "{{b5obj}}.txt=\"{{button5text}}\"",
+                "{{b5obj}}.font={{font}}",
+                "{{b5obj}}.xcen={{xcen}}",
+                "{{b5obj}}.ycen={{ycen}}",
+                "{{b5obj}}.pco={{selectedfg}}",
+                "{{b5obj}}.bco={{selectedbg}}",
+                "{{b5obj}}.pco2={{unselectedfg}}",
+                "{{b5obj}}.bco2={{unselectedbg}}",
+                "{{b6obj}}.txt=\"{{button6text}}\"",
+                "{{b6obj}}.font={{font}}",
+                "{{b6obj}}.xcen={{xcen}}",
+                "{{b6obj}}.ycen={{ycen}}",
+                "{{b6obj}}.pco={{selectedfg}}",
+                "{{b6obj}}.bco={{selectedbg}}",
+                "{{b6obj}}.pco2={{unselectedfg}}",
+                "{{b6obj}}.bco2={{unselectedbg}}",
+                "{{b7obj}}.pco={{unselectedfg}}",
+                "{{b7obj}}.bco={{unselectedbg}}",
+                "{{b7obj}}.val={{brightness}}"]
+
+      #########################################################################
+      # Update display if our entity has changed state
+      - conditions: # curtain has changed value
+          - condition: template
+            value_template: '{{ (trigger.platform == "state") and (trigger.entity_id == curtain) }}'
+        sequence:
+          - service: mqtt.publish
+            data:
+              topic: "{{jsoncommandtopic}}"
+              payload: '["{{b7obj}}.val={{brightness}}"]' # slider is 0-255
+
+      #########################################################################
+      # Handle MQTT message triggers
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.platform == "mqtt" }}'
+        sequence:
+          - choose:
+
+              #########################################################################
+              # Catch incoming JSON messages
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (trigger.topic == jsontopic) and trigger.payload_json is defined }}"
+                sequence:
+                  - choose:
+                      #########################################################################
+                      # Button Open was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b4obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: light.turn_on
+                            entity_id: !input curtain
+                            data:
+                              brightness: "{{value_open}}"
+                      #########################################################################
+                      # Button Half was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b5obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: light.turn_on
+                            entity_id: !input curtain
+                            data:
+                              brightness: "{{value_half}}"
+                      #########################################################################
+                      # Button Close was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b6obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: light.turn_on
+                            entity_id: !input curtain
+                            data:
+                              brightness: "{{value_close}}"
+                      #########################################################################
+                      # Dimmer slider was moved, slider is 0-255
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b7obj ~ ".val") }}'
+                        sequence:
+                          - service: light.turn_on
+                            entity_id: !input curtain
+                            data:
+                              brightness: "{{trigger.payload_json.value}}"
+
+              #########################################################################
+              # Theme: Apply selected foreground color when it changes.
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.topic == selectedfgtopic }}"
+                sequence:
+                  - service: mqtt.publish
+                    data:
+                      topic: "{{jsoncommandtopic}}"
+                      payload: >-
+                        ["{{b4obj}}.pco={{selectedfg}}",
+                        "{{b5obj}}.pco={{selectedfg}}",
+                        "{{b6obj}}.pco={{selectedfg}}",
+                        "{{b7obj}}.pco={{selectedfg}}"]
+              #########################################################################
+              # Theme: Apply selected background color on change
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.topic == selectedbgtopic }}"
+                sequence:
+                  - service: mqtt.publish
+                    data:
+                      topic: "{{jsoncommandtopic}}"
+                      payload: >-
+                        ["{{b4obj}}.bco={{selectedbg}}",
+                        "{{b5obj}}.bco={{selectedbg}}",
+                        "{{b6obj}}.bco={{selectedbg}}",
+                        "{{b7obj}}.bco={{selectedbg}}"]
+              #########################################################################
+              # Theme: Apply unselected foreground color on change
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.topic == unselectedfgtopic }}"
+                sequence:
+                  - service: mqtt.publish
+                    data:
+                      topic: "{{jsoncommandtopic}}"
+                      payload: >-
+                        ["{{b4obj}}.pco2={{unselectedfg}}",
+                        "{{b5obj}}.pco2={{unselectedfg}}",
+                        "{{b6obj}}.pco2={{unselectedfg}}",
+                        "{{b7obj}}.pco2={{unselectedfg}}"]
+              #########################################################################
+              # Theme: Apply unselected background color on change
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.topic == unselectedbgtopic }}"
+                sequence:
+                  - service: mqtt.publish
+                    data:
+                      topic: "{{jsoncommandtopic}}"
+                      payload: >-
+                        ["{{b4obj}}.bco2={{unselectedbg}}",
+                        "{{b5obj}}.bco2={{unselectedbg}}",
+                        "{{b6obj}}.bco2={{unselectedbg}}",
+                        "{{b7obj}}.bco2={{unselectedbg}}"]
