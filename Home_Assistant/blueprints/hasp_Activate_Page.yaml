@@ -36,7 +36,6 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
-          model: "HASPone v1.0.1"
     hasppage:
       name: "HASP Page"
       description: "Select the HASP page (1-11) for this page button. Refer to the HASP Page and Button reference above."
@@ -77,7 +76,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   hasppage: !input hasppage
@@ -92,14 +90,12 @@ trigger_variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   haspsensor: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
         {{ entity }}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'

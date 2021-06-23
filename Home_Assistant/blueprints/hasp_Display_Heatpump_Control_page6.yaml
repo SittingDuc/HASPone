@@ -53,7 +53,6 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
-          model: "HASPone v1.0.1"
     heatpump:
       name: "Heatpump to control"
       description: "Select a heatpump to control"
@@ -122,14 +121,12 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   haspsensor: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
         {{ entity }}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   heatpump: !input heatpump
@@ -138,10 +135,7 @@ variables:
   off_fgcolor: !input off_fgcolor
   off_bgcolor: !input off_bgcolor
   roundtemp: !input roundtemp
-  #button4attribute: !input button4attribute
-  #button5attribute: !input button5attribute
   commandtopic: '{{ "hasp/" ~ haspname ~ "/command/" }}'
-  #volumecommandtopic: '{{ "hasp/" ~ haspname ~ "/command/" ~ volumeobject ~ ".val" }}'
   jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'
   jsoncommandtopic: '{{ "hasp/" ~ haspname ~ "/command/json" }}'
   selectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedforegroundcolor/rgb" }}'
@@ -153,7 +147,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_selected_foreground_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -166,7 +159,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_selected_background_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -179,7 +171,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_unselected_foreground_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -192,7 +183,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_unselected_background_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -206,6 +196,8 @@ variables:
   hp_is_cool: "{{is_state(heatpump, 'cool') }}"
   hp_is_off: "{{is_state(heatpump, 'off') }}"
 
+  # change the colour of the button depending on the currently active heatpump mode
+  # note this also depends on the button*text entries and the trigger that sets colours and texts
   selectedfgh:   "{% if     hp_is_heat %}{% if on_fgcolor|int >= 0 %}{{on_fgcolor}}{% else %}{{unselectedfg}}{% endif %}{% else %}{% if off_fgcolor|int >= 0 %}{{off_fgcolor}}{% else %}{{selectedfg}}{% endif %}{% endif %}"
   selectedbgh:   "{% if     hp_is_heat %}{% if on_bgcolor|int >= 0 %}{{on_bgcolor}}{% else %}{{unselectedbg}}{% endif %}{% else %}{% if off_bgcolor|int >= 0 %}{{off_bgcolor}}{% else %}{{selectedbg}}{% endif %}{% endif %}"
   unselectedfgh: "{% if not hp_is_heat %}{% if on_fgcolor|int >= 0 %}{{on_fgcolor}}{% else %}{{unselectedfg}}{% endif %}{% else %}{% if off_fgcolor|int >= 0 %}{{off_fgcolor}}{% else %}{{selectedfg}}{% endif %}{% endif %}"
@@ -268,22 +260,18 @@ variables:
 
 trigger_variables:
   haspdevice: !input haspdevice
-#  heatpump: !input heatpump
   haspname: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   haspsensor: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
         {{ entity }}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
-  toggle_hp_state: "{%- if hp_is_off -%}heat_cool{%- else -%}off{%- endif -%}"
   jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'
   selectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedforegroundcolor/rgb" }}'
   selectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedbackgroundcolor/rgb" }}'
@@ -323,6 +311,8 @@ action:
               {{-
                 (trigger is not defined)
               or
+                (trigger.platform is none)
+              or
                 ((trigger.platform == 'homeassistant') and (trigger.event == 'start'))
               or
                 ((trigger.platform == 'template') and (trigger.entity_id == haspsensor) and (trigger.to_state.state == 'ON'))
@@ -330,6 +320,8 @@ action:
         sequence:
           - service: mqtt.publish
             data:
+              # Note we are setting the colour of the buttons based on the mode that is activated, so the colour choices here must match
+              # button*text and {un,}selected*. If they don't match, the buttons are not going to update correctly as the active mode changes
               topic: "{{jsoncommandtopic}}"
               payload: >-
                 ["p[6].b[4].pco={{selectedfg}}","p[6].b[4].bco={{selectedbg}}","p[6].b[4].pco2={{unselectedfg}}","p[6].b[4].bco2={{unselectedbg}}","p[6].b[4].font={{button4font}}","p[6].b[4].txt=\"{{button4text}}\"",
@@ -341,16 +333,6 @@ action:
                 "p[6].b[10].pco={{selectedfgo}}","p[6].b[10].bco={{selectedbgo}}","p[6].b[10].pco2={{unselectedfgo}}","p[6].b[10].bco2={{unselectedbgo}}","p[6].b[10].font={{button10font}}","p[6].b[10].txt=\"{{button10text}}\"",
                 "p[6].b[11].pco={{unselectedfg}}","p[6].b[11].bco={{unselectedbg}}","p[6].b[11].pco2={{selectedfg}}","p[6].b[11].bco2={{selectedbg}}","p[6].b[11].font={{button11font}}","p[6].b[11].txt=\"{{button11text}}\""]
 
-      #########################################################################
-      # Update volume if it has changed state
-#      - conditions: # volume has changed value
-#          - condition: template
-#            value_template: '{{ (trigger.platform == "state") and (trigger.entity_id == heatpump) and (trigger.from_state.attributes.volume_level != trigger.to_state.attributes.volume_level)}}'
-#        sequence:
-#          - service: mqtt.publish
-#            data:
-#              topic: "{{volumecommandtopic}}"
-#              payload: "{{volume}}"
       #########################################################################
       # Update button4attribute and button5attribute
       - conditions:
@@ -383,16 +365,6 @@ action:
                     value_template: "{{ (trigger.topic == jsontopic) and trigger.payload_json is defined }}"
                 sequence:
                   - choose:
-                      #########################################################################
-                      # Set the volume value when the HASP slider has moved
-#                      - conditions:
-#                          - condition: template
-#                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == volumeobject ~ ".val") }}'
-#                        sequence:
-#                          - service: media_player.volume_set
-#                            entity_id: !input heatpump
-#                            data:
-#                              volume_level: "{{trigger.payload_json.value/255}}"
                       #########################################################################
                       # Target Up was Pressed
                       - conditions:
@@ -459,16 +431,6 @@ action:
                             entity_id: !input heatpump
                             data:
                               hvac_mode: 'off'
-                      #########################################################################
-                      # Mode Itself was Pressed, toggle auto/off
-#                      - conditions:
-#                          - condition: template
-#                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == "p[6].b[12]") and (trigger.payload_json.value == "ON")}}'
-#                        sequence:
-#                          - service: climate.set_hvac_mode
-#                            entity_id: !input heatpump
-#                            data:
-#                              hvac_mode: "{{toggle_hp_state}}"
 
               #########################################################################
               # Theme: Apply selected foreground color when it changes.

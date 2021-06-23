@@ -90,7 +90,6 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
-          model: "HASPone v1.0.1"
     hasppage:
       name: "HASP Page"
       description: "Select the HASP page (1-11). Refer to the HASP Page and Button reference above."
@@ -103,7 +102,7 @@ blueprint:
           unit_of_measurement: page
     haspbutton:
       name: "HASP Button"
-      description: "Select the HASP button (4-15) for the state display. Refer to the HASP Page and Button reference above."
+      description: "Select the HASP button (4-16) for the state display. Refer to the HASP Page and Button reference above."
       default: 4
       selector:
         number:
@@ -193,7 +192,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   hasppage: !input hasppage
@@ -242,7 +240,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_selected_foreground_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -255,7 +252,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_selected_background_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -268,7 +264,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_unselected_foreground_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -281,7 +276,6 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^light\..*_unselected_background_color(?:_\d+|)$") -%}
         {%- set color.source=entity -%}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
     {%- set brightness = state_attr(color.source, "brightness")|int / 255 -%}
@@ -296,14 +290,12 @@ trigger_variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   haspsensor: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
         {{ entity }}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'
@@ -422,3 +414,4 @@ action:
                     data:
                       topic: "{{commandtopic}}.bco2"
                       payload: "{{trigger.payload}}"
+

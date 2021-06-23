@@ -38,7 +38,6 @@ blueprint:
           integration: mqtt
           manufacturer: "HASwitchPlate"
           model: "HASPone v1.0.0"
-          model: "HASPone v1.0.1"
     objects:
       name: "HASP buttons"
       description: "Create one device trigger for each button in this list."
@@ -60,14 +59,12 @@ variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   haspsensor: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
         {{ entity }}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
   haspClientId: '{{state_attr(haspsensor, "haspClientID")}}'
@@ -81,7 +78,6 @@ trigger_variables:
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
         {{ entity }}
-        {{ break }}
       {%- endif -%}
     {%- endfor -%}
 
@@ -131,4 +127,3 @@ action:
               "model":"{{haspModel}}",
               "sw_version":{{sw_version}}
               }}
-  

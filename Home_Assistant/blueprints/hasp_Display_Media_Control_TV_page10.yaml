@@ -1,22 +1,23 @@
 blueprint:
-  name: "HASP p[x].b[y] displays the month + date with a calendar icon"
+  name: "HASP p[10].b[all] Page 10 displays TV/media controls"
   description: |
 
     # Description
 
-    A HASP button displays month + date on the right with a calendar icon on the left.
+    Page 10 controls a selected media player, power, volume control and input
 
-    ![Preview](https://raw.githubusercontent.com/HASwitchPlate/HASPone/main/images/hasp_Display_Calendar_with_Icon.png)
+    ![Preview](https://raw.githubusercontent.com/HASwitchPlate/HASPone/main/images/hasp_Display_Media_Control_page10.png)
 
-    ## HASP Page and Button Reference
+    ## HASP Page and Button reference
 
     <details>
 
-    This automation is designed to work with the full-width buttons found on pages 1-3
+    This automation is designed to work with the media controls found on page 8:
 
-    | Pages 1-3 |
-    |-----------|
-    | ![Pages 1-3](https://raw.githubusercontent.com/HASwitchPlate/HASPone/main/images/NextionUI_p1-p3_4buttons.png) |
+    | Page 10 |
+    |--------|
+    | ![Page 10](https://raw.githubusercontent.com/HASwitchPlate/HASPone/main/images/NextionUI_p10_5buttons+1slider.png) |
+
 
     </details>
 
@@ -32,54 +33,45 @@ blueprint:
           model: "HASPone v1.0.0"
     hasppage:
       name: "HASP Page"
-      description: "Select the HASP page (1-3) for the calendar. Refer to the HASP Page and Button reference above."
-      default: 1
+      description: "Select the HASP page (1-11) for the controls. Refer to the HASP Page and Button reference above."
+      default: 10
       selector:
         number:
           min: 1
-          max: 3
+          max: 11
           mode: slider
           unit_of_measurement: page
-    haspbutton:
-      name: "HASP Button"
-      description: "Select the HASP button (4-7) for the calendar. Refer to the HASP Page and Button reference above."
-      default: 4
+    mediaplayer:
+      name: "Media Player to control"
+      description: "Select a media player to control"
       selector:
-        number:
-          min: 4
-          max: 7
-          mode: slider
-          unit_of_measurement: button
-
+        entity:
+          domain: media_player
 mode: parallel
 max_exceeded: silent
 
 variables:
-  haspdevice: !input haspdevice
   haspname: >-
     {%- for entity in device_entities(haspdevice) -%}
       {%- if entity|regex_search("^sensor\.") -%}
         {{- entity|regex_replace(find="^sensor\.", replace="", ignorecase=true)|regex_replace(find="_sensor(?:_\d+|)$", replace="", ignorecase=true) -}}
       {%- endif -%}
     {%- endfor -%}
+  haspsensor: >-
+    {%- for entity in device_entities(haspdevice) -%}
+      {%- if entity|regex_search("^sensor\..+_sensor(?:_\d+|)$") -%}
+        {{ entity }}
+      {%- endif -%}
+    {%- endfor -%}
   hasppage: !input hasppage
-  haspbutton: !input haspbutton
-  haspobject: '{{ "p[" ~ hasppage ~ "].b[" ~ haspbutton ~ "]" }}'
-  commandtopic: '{{ "hasp/" ~ haspname ~ "/command/" ~ haspobject }}'
+  mediaplayer: !input mediaplayer
+  commandtopic: '{{ "hasp/" ~ haspname ~ "/command/" }}'
   jsontopic: '{{ "hasp/" ~ haspname ~ "/state/json" }}'
   jsoncommandtopic: '{{ "hasp/" ~ haspname ~ "/command/json" }}'
   selectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedforegroundcolor/rgb" }}'
   selectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/selectedbackgroundcolor/rgb" }}'
   unselectedfgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedforegroundcolor/rgb" }}'
   unselectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedbackgroundcolor/rgb" }}'
-  activepage: >-
-    {%- set activepage = namespace() -%}
-    {%- for entity in device_entities(haspdevice) -%}
-      {%- if entity|regex_search("^number\..*_active_page(?:_\d+|)$") -%}
-        {%- set activepage.entity=entity -%}
-      {%- endif -%}
-    {%- endfor -%}
-    {% if states(activepage.entity)|lower == "none" %}-1{% else %}{{ states(activepage.entity) | int }}{% endif %}
   selectedfg: >-
     {%- set color = namespace() -%}
     {%- for entity in device_entities(haspdevice) -%}
@@ -128,14 +120,24 @@ variables:
     {%- set green=(state_attr(color.source, "rgb_color")[1] * brightness)|int -%}
     {%- set blue=(state_attr(color.source, "rgb_color")[2] * brightness)|int -%}
     {{ (red|bitwise_and(248)*256) + (green|bitwise_and(252)*8) + (blue|bitwise_and(248)/8)|int }}
-  text: '{{(now().strftime("%b "))~now().day}}'
-  font: 8
-  ypos: "{{(haspbutton|int - 4) * 67 + 2}}" # calculate the top pixel position based on the selected button
-  xpos: 0
-  icon: ""
-  iconwidth: 50
-  iconheight: 65
-  iconfont: 8
+
+  volume: "{% if state_attr(mediaplayer, 'volume_level')|lower == 'none' %}0{% else %}{{(state_attr(mediaplayer, 'volume_level')*100)|int}}{% endif %}"
+  button5text: ' ' # Up speaker
+  button6text: 'kodi'
+  button7text: '{{volume}}'
+  button8text: ''
+  button9text: ' ' # Down speaker
+  button10text: ''
+  b5obj: '{{ "p[" ~ hasppage ~ "].b[5]" }}'
+  b6obj: '{{ "p[" ~ hasppage ~ "].b[6]" }}'
+  b7obj: '{{ "p[" ~ hasppage ~ "].b[7]" }}'
+  b8obj: '{{ "p[" ~ hasppage ~ "].b[8]" }}'
+  b9obj: '{{ "p[" ~ hasppage ~ "].b[9]" }}'
+  b10obj: '{{ "p[" ~ hasppage ~ "].b[10]" }}'
+  xcen: 1
+  ycen: 1
+  font: 7
+
 
 trigger_variables:
   haspdevice: !input haspdevice
@@ -158,12 +160,12 @@ trigger_variables:
   unselectedbgtopic: '{{ "hasp/" ~ haspname ~ "/light/unselectedbackgroundcolor/rgb" }}'
 
 trigger:
-  - platform: time
-    at: "00:00:00"
-  - platform: homeassistant
-    event: start
+  - platform: state
+    entity_id: !input mediaplayer
   - platform: template
     value_template: "{{ is_state(haspsensor, 'ON') }}"
+  - platform: homeassistant
+    event: start
   - platform: mqtt
     topic: "{{jsontopic}}"
   - platform: mqtt
@@ -183,7 +185,7 @@ action:
   - choose:
       #########################################################################
       # RUN ACTIONS or Home Assistant Startup or HASP Connect
-      # Apply styles, place text, and then place icon if our target page is currently active
+      # Apply styles and place text
       - conditions:
           - condition: template
             value_template: >- 
@@ -199,33 +201,26 @@ action:
             data:
               topic: "{{jsoncommandtopic}}"
               payload: >-
-                ["{{haspobject}}.font={{font}}",
-                "{{haspobject}}.xcen=2",
-                "{{haspobject}}.ycen=1",
-                "{{haspobject}}.pco={{selectedfg}}",
-                "{{haspobject}}.bco={{selectedbg}}",
-                "{{haspobject}}.pco2={{unselectedfg}}",
-                "{{haspobject}}.bco2={{unselectedbg}}",
-                "{{haspobject}}.txt=\"{{text}} \""
-                {%- if activepage|int == hasppage|int -%}
-                ,"delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""
-                {%- endif -%}]
+                ["{{b5obj}}.txt=\"{{button5text}}\"","{{b5obj}}.font={{font}}","{{b5obj}}.xcen={{xcen}}","{{b5obj}}.ycen={{ycen}}","{{b5obj}}.pco={{selectedfg}}","{{b5obj}}.bco={{selectedbg}}","{{b5obj}}.pco2={{unselectedfg}}","{{b5obj}}.bco2={{unselectedbg}}",
+                "{{b6obj}}.txt=\"{{button6text}}\"","{{b6obj}}.font={{font}}","{{b6obj}}.xcen={{xcen}}","{{b6obj}}.ycen={{ycen}}","{{b6obj}}.pco={{selectedfg}}","{{b6obj}}.bco={{selectedbg}}", "{{b6obj}}.pco2={{unselectedfg}}","{{b6obj}}.bco2={{unselectedbg}}",
+                "{{b7obj}}.txt=\"{{button7text}}\"","{{b7obj}}.font={{font}}","{{b7obj}}.xcen={{xcen}}","{{b7obj}}.ycen={{ycen}}","{{b7obj}}.pco={{selectedfg}}","{{b7obj}}.bco={{selectedbg}}","{{b7obj}}.pco2={{unselectedfg}}","{{b7obj}}.bco2={{unselectedbg}}",
+                "{{b8obj}}.txt=\"{{button8text}}\"","{{b8obj}}.font={{font}}","{{b8obj}}.xcen={{xcen}}","{{b8obj}}.ycen={{ycen}}","{{b8obj}}.pco={{selectedfg}}","{{b8obj}}.bco={{selectedbg}}","{{b8obj}}.pco2={{unselectedfg}}","{{b8obj}}.bco2={{unselectedbg}}",
+                "{{b9obj}}.txt=\"{{button9text}}\"","{{b9obj}}.font={{font}}","{{b9obj}}.xcen={{xcen}}","{{b9obj}}.ycen={{ycen}}","{{b9obj}}.pco={{selectedfg}}","{{b9obj}}.bco={{selectedbg}}","{{b9obj}}.pco2={{unselectedfg}}","{{b9obj}}.bco2={{unselectedbg}}",
+                "{{b10obj}}.txt=\"{{button10text}}\"","{{b10obj}}.font={{font}}","{{b10obj}}.xcen={{xcen}}","{{b10obj}}.ycen={{ycen}}","{{b10obj}}.pco={{selectedfg}}","{{b10obj}}.bco={{selectedbg}}","{{b10obj}}.pco2={{unselectedfg}}","{{b10obj}}.bco2={{unselectedbg}}"]
+
       #########################################################################
-      # Update the calendar text every day at midnight.  If the selected page is currently active, also place the icon.
-      - conditions: #
+      # Update volume if it has changed state
+      - conditions: # volume has changed value
           - condition: template
-            value_template: '{{ trigger.platform == "time" }}'
+            value_template: '{{ (trigger.platform == "state") and (trigger.entity_id == mediaplayer) and (trigger.from_state.attributes.volume_level != trigger.to_state.attributes.volume_level)}}'
         sequence:
           - service: mqtt.publish
             data:
               topic: "{{jsoncommandtopic}}"
-              payload: >-
-                ["{{haspobject}}.txt=\"{{text}} \""
-                {%- if activepage|int == hasppage|int -%}
-                ,"delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""
-                {%- endif -%}]
+              payload: '["{{b7obj}}.txt=\"{{button7text}}\""]'
+
       #########################################################################
-      # Catch MQTT events
+      # Handle MQTT message triggers
       - conditions:
           - condition: template
             value_template: '{{ trigger.platform == "mqtt" }}'
@@ -239,41 +234,76 @@ action:
                 sequence:
                   - choose:
                       #########################################################################
-                      # Icon overlay
-                      - conditions: # Somebody pressed our button which hides the overlaid icon.  Put it back.
+                      # Button Up was Pressed
+                      - conditions:
                           - condition: template
-                            value_template: '{{ (trigger.topic == jsontopic ) and (trigger.payload_json.event == haspobject ) and (trigger.payload_json.value == "OFF") }}'
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b5obj) and (trigger.payload_json.value == "ON")}}'
                         sequence:
-                          - service: mqtt.publish
-                            data:
-                              topic: "{{jsoncommandtopic}}"
-                              payload: '["delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""]'
-                      - conditions: # Page changed to our page, so place the icon on the screen.
+                          - service: media_player.volume_up
+                            entity_id: !input mediaplayer
+                      #########################################################################
+                      # Button Input=Kodi was Pressed
+                      - conditions:
                           - condition: template
-                            value_template: '{{ (trigger.topic == jsontopic ) and (trigger.payload_json.event == "page" ) and (trigger.payload_json.value == hasppage|int) }}'
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b6obj) and (trigger.payload_json.value == "ON")}}'
                         sequence:
-                          - service: mqtt.publish
+                          - service: media_player.select_source
+                            entity_id: !input mediaplayer
                             data:
-                              topic: "{{jsoncommandtopic}}"
-                              payload: '["delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""]'
+                              source: "Kodi TV"
+                      #########################################################################
+                      # Current volume was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b7obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: media_player.volume_mute
+                            entity_id: !input mediaplayer
+                      #########################################################################
+                      # Button Input=Chromecast was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b8obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: media_player.select_source
+                            entity_id: !input mediaplayer
+                            data:
+                              source: "Chromecast"
+                      #########################################################################
+                      # Button Down was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b9obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: media_player.volume_down
+                            entity_id: !input mediaplayer
+                      #########################################################################
+                      # Button Input=Chromecast was Pressed
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ (trigger.topic == jsontopic) and (trigger.payload_json.event == b10obj) and (trigger.payload_json.value == "ON")}}'
+                        sequence:
+                          - service: media_player.select_source
+                            entity_id: !input mediaplayer
+                            data:
+                              source: "DVD"
+
               #########################################################################
               # Theme: Apply selected foreground color when it changes.
-              # Any change to the button will remove the overlaid icon.
               - conditions:
                   - condition: template
                     value_template: "{{ trigger.topic == selectedfgtopic }}"
                 sequence:
                   - service: mqtt.publish
                     data:
-                      topic: "{{commandtopic}}.pco"
-                      payload: "{{trigger.payload}}"
-                  - condition: template
-                    value_template: "{{ activepage|int == hasppage|int }}"
-                  - delay: "00:00:00.5"
-                  - service: mqtt.publish
-                    data:
                       topic: "{{jsoncommandtopic}}"
-                      payload: '["delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{trigger.payload}},0,1,1,3,\"{{icon}}\""]'
+                      payload: >-
+                        ["{{b5obj}}.pco={{selectedfg}}",
+                        "{{b6obj}}.pco={{selectedfg}}",
+                        "{{b7obj}}.pco={{selectedfg}}",
+                        "{{b8obj}}.pco={{selectedfg}}",
+                        "{{b9obj}}.pco={{selectedfg}}",
+                        "{{b10obj}}.pco={{selectedfg}}"]
               #########################################################################
               # Theme: Apply selected background color on change
               - conditions:
@@ -282,15 +312,14 @@ action:
                 sequence:
                   - service: mqtt.publish
                     data:
-                      topic: "{{commandtopic}}.bco"
-                      payload: "{{trigger.payload}}"
-                  - condition: template
-                    value_template: "{{ activepage|int == hasppage|int }}"
-                  - delay: "00:00:00.5"
-                  - service: mqtt.publish
-                    data:
                       topic: "{{jsoncommandtopic}}"
-                      payload: '["delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""]'
+                      payload: >-
+                        ["{{b5obj}}.bco={{selectedbg}}",
+                        "{{b6obj}}.bco={{selectedbg}}",
+                        "{{b7obj}}.bco={{selectedbg}}",
+                        "{{b8obj}}.bco={{selectedbg}}",
+                        "{{b9obj}}.bco={{selectedbg}}",
+                        "{{b10obj}}.bco={{selectedbg}}"]
               #########################################################################
               # Theme: Apply unselected foreground color on change
               - conditions:
@@ -299,15 +328,14 @@ action:
                 sequence:
                   - service: mqtt.publish
                     data:
-                      topic: "{{commandtopic}}.pco2"
-                      payload: "{{trigger.payload}}"
-                  - condition: template
-                    value_template: "{{ activepage|int == hasppage|int }}"
-                  - delay: "00:00:00.5"
-                  - service: mqtt.publish
-                    data:
                       topic: "{{jsoncommandtopic}}"
-                      payload: '["delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""]'
+                      payload: >-
+                        ["{{b5obj}}.pco2={{unselectedfg}}",
+                        "{{b6obj}}.pco2={{unselectedfg}}",
+                        "{{b7obj}}.pco2={{unselectedfg}}",
+                        "{{b8obj}}.pco2={{unselectedfg}}",
+                        "{{b9obj}}.pco2={{unselectedfg}}",
+                        "{{b10obj}}.pco2={{unselectedfg}}"]
               #########################################################################
               # Theme: Apply unselected background color on change
               - conditions:
@@ -316,12 +344,11 @@ action:
                 sequence:
                   - service: mqtt.publish
                     data:
-                      topic: "{{commandtopic}}.bco2"
-                      payload: "{{trigger.payload}}"
-                  - condition: template
-                    value_template: "{{ activepage|int == hasppage|int }}"
-                  - delay: "00:00:00.5"
-                  - service: mqtt.publish
-                    data:
                       topic: "{{jsoncommandtopic}}"
-                      payload: '["delay=1","xstr {{xpos}},{{ypos}},{{iconwidth}},{{iconheight}},{{iconfont}},{{selectedfg}},0,1,1,3,\"{{icon}}\""]'
+                      payload: >-
+                        ["{{b5obj}}.bco2={{unselectedbg}}",
+                        "{{b6obj}}.bco2={{unselectedbg}}",
+                        "{{b7obj}}.bco2={{unselectedbg}}",
+                        "{{b8obj}}.bco2={{unselectedbg}}",
+                        "{{b9obj}}.bco2={{unselectedbg}}",
+                        "{{b10obj}}.bco2={{unselectedbg}}"]
